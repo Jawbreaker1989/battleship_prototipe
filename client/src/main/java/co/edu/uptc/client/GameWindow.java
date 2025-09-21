@@ -22,6 +22,7 @@ public class GameWindow extends JFrame {
     private JLabel statusLabel;
     private JLabel turnLabel;
     private JTextArea messageArea;
+    private JButton connectButton;
     
     // Estado GUI
     private String playerName;
@@ -31,10 +32,10 @@ public class GameWindow extends JFrame {
         controller.initialize();
         controller.setGameWindow(this);
         
-        // Auto-conectar con nombre automático
-        autoConnect();
-        
         initializeGUI();
+        
+        // Auto-conectar con nombre automático después de inicializar GUI
+        autoConnect();
     }
     
     private void autoConnect() {
@@ -49,6 +50,29 @@ public class GameWindow extends JFrame {
             } catch (Exception ex) {
                 LOGGER.severe("Error en auto-conexión: " + ex.getMessage());
                 showError("Error conectando automáticamente: " + ex.getMessage());
+            }
+        });
+    }
+    
+    /**
+     * Intenta reconectar al servidor
+     */
+    private void reconnect() {
+        SwingUtilities.invokeLater(() -> {
+            showMessage("🔄 Intentando reconectar...");
+            updateStatus("🔄 Reconectando...");
+            
+            String autoName = "Jugador" + (System.currentTimeMillis() % 1000);
+            playerName = autoName;
+            
+            try {
+                controller.connectPlayer(autoName);
+                connectButton.setText("✅ Conectado");
+                connectButton.setEnabled(false);
+            } catch (Exception ex) {
+                LOGGER.severe("Error en reconexión: " + ex.getMessage());
+                showError("Error reconectando: " + ex.getMessage());
+                connectButton.setText("❌ Reintentar");
             }
         });
     }
@@ -100,20 +124,41 @@ public class GameWindow extends JFrame {
     }
     
     private JPanel createStatusPanel() {
-        JPanel panel = new JPanel(new FlowLayout());
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
         
-        statusLabel = new JLabel("Conectando...");
+        // Panel izquierdo para el status
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        statusPanel.setBackground(Color.DARK_GRAY);
+        
+        statusLabel = new JLabel("🔌 Desconectado");
         statusLabel.setForeground(Color.WHITE);
         statusLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-        panel.add(statusLabel);
+        statusPanel.add(statusLabel);
         
-        panel.add(Box.createHorizontalStrut(20));
+        // Panel derecho para controles de conexión
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        controlPanel.setBackground(Color.DARK_GRAY);
+        
+        connectButton = new JButton("🔗 Reconectar");
+        connectButton.setBackground(new Color(70, 130, 180));
+        connectButton.setForeground(Color.WHITE);
+        connectButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        connectButton.addActionListener(e -> reconnect());
+        controlPanel.add(connectButton);
+        
+        // Panel central para turno
+        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        centerPanel.setBackground(Color.DARK_GRAY);
         
         turnLabel = new JLabel("");
         turnLabel.setForeground(Color.YELLOW);
         turnLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
-        panel.add(turnLabel);
+        centerPanel.add(turnLabel);
+        
+        panel.add(statusPanel, BorderLayout.WEST);
+        panel.add(centerPanel, BorderLayout.CENTER);
+        panel.add(controlPanel, BorderLayout.EAST);
         
         return panel;
     }
@@ -139,53 +184,65 @@ public class GameWindow extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("🚢 COLOCAR BARCOS"));
         panel.setBackground(new Color(240, 248, 255));
         
-        // Título
-        JLabel titleLabel = new JLabel("🎯 Haz clic en TU TABLERO para colocar barcos");
+        // Título mejorado
+        JLabel titleLabel = new JLabel("<html><center>🎯 Haz clic en TU TABLERO<br>para colocar barcos</center></html>");
         titleLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(titleLabel);
         panel.add(Box.createVerticalStrut(10));
         
-        // Botón para cambiar orientación
-        JButton orientationButton = new JButton("🔄 Horizontal");
+        // Botón para cambiar orientación mejorado
+        JButton orientationButton = new JButton("🔄 Orientación: Horizontal");
         orientationButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        orientationButton.setBackground(new Color(70, 130, 180));
+        orientationButton.setForeground(Color.WHITE);
+        orientationButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
         orientationButton.addActionListener(e -> {
             myBoard.toggleOrientation();
-            orientationButton.setText(myBoard.isHorizontal() ? "🔄 Horizontal" : "🔄 Vertical");
+            orientationButton.setText(myBoard.isHorizontal() ? 
+                "🔄 Orientación: Horizontal" : "🔄 Orientación: Vertical");
         });
         panel.add(orientationButton);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(15));
         
-        // Lista de barcos por colocar
-        JLabel shipsLabel = new JLabel("Barcos restantes:");
+        // Lista de barcos por colocar con colores
+        JLabel shipsLabel = new JLabel("🛡️ Barcos por colocar:");
         shipsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        shipsLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
         panel.add(shipsLabel);
+        panel.add(Box.createVerticalStrut(5));
         
-        // Barcos por colocar
-        JLabel ship1 = new JLabel("🚢 Portaaviones (5 casillas)");
-        JLabel ship2 = new JLabel("🚢 Acorazado (4 casillas)");
-        JLabel ship3 = new JLabel("🚢 Crucero (3 casillas)");
-        JLabel ship4 = new JLabel("🚢 Submarino (3 casillas)");
-        JLabel ship5 = new JLabel("🚢 Destructor (2 casillas)");
+        // Barcos por colocar con indicadores visuales
+        String[] shipDescriptions = {
+            "🚢 Portaaviones (5 casillas)",
+            "⚓ Acorazado (4 casillas)", 
+            "🛥️ Crucero (3 casillas)",
+            "🚤 Submarino (3 casillas)",
+            "⛵ Destructor (2 casillas)"
+        };
         
-        ship1.setAlignmentX(Component.CENTER_ALIGNMENT);
-        ship2.setAlignmentX(Component.CENTER_ALIGNMENT);
-        ship3.setAlignmentX(Component.CENTER_ALIGNMENT);
-        ship4.setAlignmentX(Component.CENTER_ALIGNMENT);
-        ship5.setAlignmentX(Component.CENTER_ALIGNMENT);
+        for (String shipDesc : shipDescriptions) {
+            JLabel shipLabel = new JLabel(shipDesc);
+            shipLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            shipLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
+            panel.add(shipLabel);
+        }
         
-        panel.add(ship1);
-        panel.add(ship2);
-        panel.add(ship3);
-        panel.add(ship4);
-        panel.add(ship5);
+        panel.add(Box.createVerticalStrut(15));
+        
+        // Indicador de progreso
+        JLabel progressLabel = new JLabel("Progreso: 0/5 barcos");
+        progressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        progressLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
+        progressLabel.setForeground(Color.BLUE);
+        panel.add(progressLabel);
         
         panel.add(Box.createVerticalStrut(10));
         
-        // Botón para listo
+        // Botón para listo mejorado
         JButton readyButton = new JButton("✅ ¡LISTO PARA JUGAR!");
         readyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        readyButton.setBackground(Color.GREEN);
+        readyButton.setBackground(new Color(34, 139, 34));
         readyButton.setForeground(Color.WHITE);
         readyButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         readyButton.addActionListener(e -> {
@@ -193,8 +250,9 @@ public class GameWindow extends JFrame {
             if (myBoard.allShipsPlaced()) {
                 showMessage("✅ Todos los barcos colocados. Esperando oponente...");
                 readyButton.setEnabled(false);
+                readyButton.setText("⏳ Esperando...");
             } else {
-                showMessage("❌ Debes colocar todos los barcos primero");
+                showMessage("❌ Debes colocar todos los barcos primero (5 en total)");
             }
         });
         panel.add(readyButton);
@@ -204,14 +262,24 @@ public class GameWindow extends JFrame {
     
     private JPanel createMessagePanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("📢 Mensajes"));
+        panel.setBorder(BorderFactory.createTitledBorder("📢 Mensajes del Juego"));
         panel.setPreferredSize(new Dimension(250, 400));
         
         messageArea = new JTextArea(20, 15);
         messageArea.setEditable(false);
         messageArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
-        messageArea.setBackground(Color.BLACK);
-        messageArea.setForeground(Color.GREEN);
+        messageArea.setBackground(new Color(25, 25, 25));
+        messageArea.setForeground(new Color(0, 255, 0));
+        messageArea.setLineWrap(true);
+        messageArea.setWrapStyleWord(true);
+        
+        // Agregar mensaje de bienvenida
+        messageArea.setText("🎮 ¡Bienvenido a Batalla Naval!\n" +
+                           "📋 Instrucciones:\n" +
+                           "1. Coloca 5 barcos en tu tablero\n" +
+                           "2. Cambia orientación con el botón\n" +
+                           "3. Haz clic para atacar al enemigo\n" +
+                           "4. ¡Hunde todos sus barcos!\n\n");
         
         JScrollPane scrollPane = new JScrollPane(messageArea);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);

@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 public class ClientMain {
     private static final Logger LOGGER = Logger.getLogger(ClientMain.class.getName());
     private static final String DEFAULT_HOST = "localhost";
-    private static final int DEFAULT_PORT = 1099;
+    private static final int DEFAULT_PORT = 1100;
     
     public static void main(String[] args) {
         // Obtener parámetros de conexión

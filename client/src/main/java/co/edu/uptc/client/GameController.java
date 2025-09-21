@@ -23,6 +23,7 @@ public class GameController {
     private String playerId;
     private String sessionId;
     private boolean isMyTurn = false;
+    private Timer statusCheckTimer;
     
     public GameController(Registry registry) {
         this.registry = registry;
@@ -62,11 +63,15 @@ public class GameController {
                 sessionId = parts[2];
                 
                 SwingUtilities.invokeLater(() -> {
-                    gameWindow.showMessage("Conectado como: " + playerName);
-                    gameWindow.updateStatus("Conectado - Esperando oponente...");
+                    gameWindow.showMessage("✅ Conectado como: " + playerName + " (ID: " + playerId + ")");
+                    gameWindow.updateStatus("Conectado - Buscando oponente...");
                     
                     // El usuario ahora coloca los barcos manualmente
                     gameWindow.showMessage("🚢 Coloca tus barcos haciendo clic en TU TABLERO");
+                    gameWindow.showMessage("💡 Tip: Usa el botón para cambiar orientación (horizontal/vertical)");
+                    
+                    // Iniciar verificación periódica del estado
+                    startStatusChecking();
                 });
                 
                 LOGGER.info("Conectado exitosamente - ID: " + playerId + ", Sesión: " + sessionId);
@@ -80,6 +85,34 @@ public class GameController {
             LOGGER.severe("Error en RMI al conectar: " + e.getMessage());
             SwingUtilities.invokeLater(() -> 
                 gameWindow.showError("Error de comunicación: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Inicia verificación periódica del estado del juego
+     */
+    private void startStatusChecking() {
+        if (statusCheckTimer != null) {
+            statusCheckTimer.stop();
+        }
+        
+        statusCheckTimer = new Timer(3000, e -> {
+            if (playerId != null && sessionId != null) {
+                refreshGameStatus();
+            }
+        });
+        statusCheckTimer.start();
+        LOGGER.info("Verificación periódica de estado iniciada");
+    }
+    
+    /**
+     * Detiene la verificación periódica del estado
+     */
+    private void stopStatusChecking() {
+        if (statusCheckTimer != null) {
+            statusCheckTimer.stop();
+            statusCheckTimer = null;
+            LOGGER.info("Verificación periódica de estado detenida");
         }
     }
     
@@ -191,7 +224,25 @@ public class GameController {
     
     public void handleStatusChange(GameStatus status) {
         SwingUtilities.invokeLater(() -> {
-            gameWindow.updateStatus("Estado: " + status.getPhase());
+            String statusMessage = "";
+            switch (status.getPhase()) {
+                case WAITING:
+                    statusMessage = "🔄 Esperando jugadores (" + status.getPlayersConnected() + "/2)";
+                    break;
+                case PLACING_SHIPS:
+                    statusMessage = "🚢 Fase de colocación de barcos";
+                    break;
+                case PLAYING:
+                    statusMessage = "⚔️ Juego en progreso";
+                    break;
+                case FINISHED:
+                    statusMessage = "🏁 Juego terminado";
+                    stopStatusChecking();
+                    break;
+                default:
+                    statusMessage = "📊 Estado: " + status.getPhase();
+            }
+            gameWindow.updateStatus(statusMessage);
         });
     }
     

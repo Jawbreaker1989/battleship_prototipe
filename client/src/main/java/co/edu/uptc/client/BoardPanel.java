@@ -15,12 +15,13 @@ public class BoardPanel extends JPanel {
     private static final int BOARD_SIZE = 10;
     private static final int CELL_SIZE = 40;
     
-    // Colores claros y obvios
+    // Colores modernos y claros
     private static final Color WATER_COLOR = new Color(173, 216, 230);     // Azul claro
-    private static final Color SHIP_COLOR = new Color(105, 105, 105);      // Gris barco
-    private static final Color HIT_COLOR = Color.RED;                      // Rojo impacto
-    private static final Color MISS_COLOR = Color.WHITE;                   // Blanco fallo
-    private static final Color UNKNOWN_COLOR = new Color(0, 191, 255);     // Azul profundo
+    private static final Color SHIP_COLOR = new Color(70, 130, 180);       // Azul acero para barcos
+    private static final Color HIT_COLOR = new Color(220, 20, 60);         // Rojo carmesí para impactos
+    private static final Color MISS_COLOR = new Color(255, 255, 255);      // Blanco para fallos
+    private static final Color UNKNOWN_COLOR = new Color(0, 191, 255);     // Azul profundo para desconocido
+    private static final Color HOVER_COLOR = new Color(255, 215, 0);       // Dorado para hover
     
     private final GameWindow parentWindow;
     private final CellState[][] board;
@@ -147,9 +148,9 @@ public class BoardPanel extends JPanel {
             placeShip(x, y, shipSize, isHorizontal);
             shipsPlaced++;
             currentShipIndex++;
-            parentWindow.showMessage("✅ Barco colocado! " + 
-                (allShipsPlaced() ? "Todos los barcos listos!" : 
-                "Siguiente: " + (shipSizes.length - shipsPlaced) + " barcos restantes"));
+            String remaining = (shipSizes.length - shipsPlaced) + " barcos restantes";
+            parentWindow.showMessage("✅ Barco " + shipsPlaced + "/5 colocado! " + 
+                (allShipsPlaced() ? "🎉 ¡Todos los barcos listos!" : remaining));
             repaint();
         } else {
             parentWindow.showMessage("❌ No se puede colocar el barco aquí");

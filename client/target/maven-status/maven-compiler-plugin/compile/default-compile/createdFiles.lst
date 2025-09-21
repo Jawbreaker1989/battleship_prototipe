@@ -6,3 +6,4 @@ co/edu/uptc/client/GameCallbackImpl.class
 co/edu/uptc/client/GameController.class
 co/edu/uptc/client/GameWindow.class
 co/edu/uptc/client/BoardPanel$1.class
+co/edu/uptc/client/GameController$1.class
