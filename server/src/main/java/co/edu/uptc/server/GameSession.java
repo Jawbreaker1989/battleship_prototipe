@@ -28,17 +28,19 @@ public class GameSession {
     public synchronized boolean addPlayer(Player player) {
         if (player1 == null) {
             player1 = player;
-            notifyPlayer(player, "Esperando segundo jugador...");
+            notifyPlayer(player, "🔗 Conectado al servidor. Esperando segundo jugador... (1/2)");
+            LOGGER.info("Primer jugador conectado: " + player.getName());
             return true;
         } else if (player2 == null) {
             player2 = player;
             phase = GameStatus.GamePhase.PLACING_SHIPS;
             
-            // Notificar a ambos jugadores
-            notifyPlayer(player1, "Jugador 2 conectado: " + player2.getName());
-            notifyPlayer(player2, "Conectado contra: " + player1.getName());
-            notifyBothPlayers("¡Coloquen sus barcos!");
+            // Notificar a ambos jugadores con mejor mensaje
+            notifyPlayer(player1, "🎮 ¡Segundo jugador conectado! Oponente: " + player2.getName());
+            notifyPlayer(player2, "🎮 ¡Conectado exitosamente! Oponente: " + player1.getName());
+            notifyBothPlayers("🚢 ¡Ambos jugadores conectados! Ahora coloquen sus 5 barcos en el tablero.");
             
+            LOGGER.info("Segundo jugador conectado: " + player.getName() + ". Sesión completa.");
             return true;
         }
         return false; // Sesión llena
@@ -57,11 +59,20 @@ public class GameSession {
             boolean placed = player.getBoard().placeShip(start, end);
             
             if (placed) {
-                notifyPlayer(player, "Barco colocado");
+                notifyPlayer(player, "✅ Barco colocado correctamente (" + player.getBoard().getShipCount() + "/5)");
                 
                 // Verificar si ambos están listos para jugar
                 if (bothPlayersReady()) {
+                    notifyBothPlayers("🎉 ¡Ambos jugadores han colocado sus barcos!");
                     startGame();
+                } else {
+                    // Informar progreso al jugador
+                    int shipsCount = player.getBoard().getShipCount();
+                    if (shipsCount < 5) {
+                        notifyPlayer(player, "📊 Progreso: " + shipsCount + "/5 barcos colocados");
+                    } else {
+                        notifyPlayer(player, "⏳ Todos tus barcos colocados. Esperando al oponente...");
+                    }
                 }
             }
             
@@ -154,19 +165,31 @@ public class GameSession {
     private void startGame() {
         phase = GameStatus.GamePhase.PLAYING;
         currentTurn = player1.getId(); // Player1 siempre empieza
-        notifyBothPlayers("¡Juego iniciado! " + player1.getName() + " ataca primero.");
+        
+        // Notificaciones más claras para el inicio del juego
+        notifyBothPlayers("🎯 ¡Juego iniciado! Todos los barcos colocados.");
+        notifyPlayer(player1, "🔥 ¡Es tu turno! Haz clic en el tablero enemigo para atacar.");
+        notifyPlayer(player2, "⏳ Turno de " + player1.getName() + ". Espera tu turno...");
+        
+        LOGGER.info("Juego iniciado - Turno inicial: " + player1.getName());
     }
     
     private void switchTurn() {
         currentTurn = currentTurn.equals(player1.getId()) ? player2.getId() : player1.getId();
         Player current = getPlayer(currentTurn);
-        notifyBothPlayers("Turno de: " + current.getName());
+        Player waiting = getOpponent(currentTurn);
+        
+        // Notificaciones más específicas por jugador
+        notifyPlayer(current, "🔥 ¡Es tu turno! Haz clic en el tablero enemigo para atacar.");
+        notifyPlayer(waiting, "⏳ Turno de " + current.getName() + ". Espera tu turno...");
+        
+        LOGGER.info("Cambio de turno - Ahora ataca: " + current.getName());
     }
     
     private boolean bothPlayersReady() {
-        // Simplificado: asumimos listos si ambos tienen al menos 1 barco
-        return player1 != null && player1.getBoard().getShipCount() > 0 &&
-               player2 != null && player2.getBoard().getShipCount() > 0;
+        // Verificar que ambos tengan exactamente 5 barcos para más realismo
+        return player1 != null && player1.getBoard().getShipCount() >= 5 &&
+               player2 != null && player2.getBoard().getShipCount() >= 5;
     }
     
     private void notifyPlayer(Player player, String message) {

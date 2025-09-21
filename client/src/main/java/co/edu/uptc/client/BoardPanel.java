@@ -140,20 +140,35 @@ public class BoardPanel extends JPanel {
     
     private void tryPlaceShip(int x, int y) {
         if (!isMyBoard || allShipsPlaced()) {
+            if (allShipsPlaced()) {
+                parentWindow.showMessage("✅ Ya has colocado todos los barcos (5/5)");
+            }
             return;
         }
         
         int shipSize = shipSizes[currentShipIndex];
+        String[] shipNames = {"Portaaviones", "Acorazado", "Crucero", "Submarino", "Destructor"};
+        String shipName = shipNames[currentShipIndex];
+        
         if (canPlaceShip(x, y, shipSize, isHorizontal)) {
             placeShip(x, y, shipSize, isHorizontal);
             shipsPlaced++;
             currentShipIndex++;
+            
             String remaining = (shipSizes.length - shipsPlaced) + " barcos restantes";
-            parentWindow.showMessage("✅ Barco " + shipsPlaced + "/5 colocado! " + 
+            parentWindow.showMessage("✅ " + shipName + " colocado! (" + shipsPlaced + "/5) " + 
                 (allShipsPlaced() ? "🎉 ¡Todos los barcos listos!" : remaining));
+            
+            // Información del siguiente barco
+            if (!allShipsPlaced()) {
+                String nextShip = shipNames[currentShipIndex];
+                int nextSize = shipSizes[currentShipIndex];
+                parentWindow.showMessage("📍 Siguiente: " + nextShip + " (" + nextSize + " casillas)");
+            }
+            
             repaint();
         } else {
-            parentWindow.showMessage("❌ No se puede colocar el barco aquí");
+            parentWindow.showMessage("❌ No se puede colocar " + shipName + " aquí. Verifica espacio y separación.");
         }
     }
     
