@@ -1,8 +1,8 @@
-co\edu\uptc\shared\model\GameStatus$GamePhase.class
-co\edu\uptc\shared\model\Ship.class
-co\edu\uptc\shared\interfaces\GameCallback.class
-co\edu\uptc\shared\interfaces\GameService.class
-co\edu\uptc\shared\model\Board$AttackResult.class
-co\edu\uptc\shared\model\Board.class
-co\edu\uptc\shared\model\GameStatus.class
-co\edu\uptc\shared\model\Position.class
+co/edu/uptc/shared/interfaces/GameCallback.class
+co/edu/uptc/shared/model/Ship.class
+co/edu/uptc/shared/model/GameStatus$GamePhase.class
+co/edu/uptc/shared/model/Position.class
+co/edu/uptc/shared/model/GameStatus.class
+co/edu/uptc/shared/model/Board.class
+co/edu/uptc/shared/model/Board$AttackResult.class
+co/edu/uptc/shared/interfaces/GameService.class
